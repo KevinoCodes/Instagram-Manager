@@ -1,0 +1,201 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--Import materialize.css-->
+    <link type="text/css" rel="stylesheet" href="materialize.css"  media="screen,projection"/>
+
+    <title>home</title>
+
+</head>
+<body>
+
+  <script>
+    accessToken = "";
+    fbID_1 = "";
+    instaID = "";
+    latestPostID = "";
+    latestPostURL = "";
+
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId      : '2780557032266285',
+          cookie     : true,
+          xfbml      : true,
+          version    : 'v9.0'
+        });
+          
+        FB.AppEvents.logPageView();   
+
+        FB.getLoginStatus(function(response) {
+          statusChangeCallback(response);
+        });  
+      };
+
+      (function(d, s, id){
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) {return;}
+        js = d.createElement(s); js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+
+      function statusChangeCallback(response) {
+        if(response.status === "connected") {
+          console.log("Logged in and authenticated");
+          console.log(response);
+          accessToken = String(response.authResponse.accessToken);
+        } else {
+          console.log("Not authenticated");
+        }
+      }
+
+    async function fbUser() { 
+         await fetch("https://graph.facebook.com/v9.0/me/accounts?access_token="+accessToken)
+            .then((resp) => resp.json())
+            .then(function(data) 
+            {
+              console.log(data);
+              fbID_1 = String(data.data[0].id);
+            })
+            .catch(function(error)
+            {
+              console.log(error);
+            });
+    
+    }
+
+    async function getInstaID() {
+       await fetch ("https://graph.facebook.com/v9.0/"+fbID_1+"?fields=instagram_business_account&access_token="+accessToken)
+        .then((resp) => resp.json())
+        .then(function(data) 
+        {
+          console.log(data);
+          instaID = String(data.instagram_business_account.id);
+        })
+        .catch(function(error)
+        {
+          console.log(error);
+        });
+    }
+
+    async function getInstaThings() {
+       await fetch ("https://graph.facebook.com/v9.0/"+instaID+"?fields=profile_picture_url%2Cusername%2Cfollowers_count%2Cfollows_count%2Cmedia_count%2Cmedia&access_token="+accessToken)
+        .then((resp) => resp.json())
+        .then(function(data) 
+        {
+          console.log(data);
+          latestPostID = String(data.media.data[0].id);
+        })
+        .catch(function(error)
+        {
+          console.log(error);
+        });
+    }
+
+    async function getLatestPost() {
+       await fetch ("https://graph.facebook.com/v9.0/"+latestPostID+"?fields=caption%2Cmedia_url%2Ccomments_count%2Clike_count%2Cpermalink&access_token="+accessToken)
+        .then((resp) => resp.json())
+        .then(function(data) 
+        {
+          console.log(data);
+          latestPostURL = String(data.media_url);
+          document.getElementById("latestPostPic").src = data.media_url;
+          document.getElementById("latestPostLink").href = data.permalink;
+          document.getElementById("latestPostCaption").innerHTML = data.caption;
+          document.getElementById("latestLikeCount").innerHTML = data.like_count;
+          document.getElementById("latestCommentCount").innerHTML = data.comments_count;
+        })
+        .catch(function(error)
+        {
+          console.log(error);
+        });
+    }
+    
+    function FBLogout() {
+      FB.logout(function(response) {
+        console.log("Logged Out")
+      });
+    }
+
+    mainFunction();
+
+    async function mainFunction() {
+      await fbUser();
+      await getInstaID();
+      await getInstaThings();
+      await getLatestPost();
+    }
+
+
+  </script>
+
+
+    <!-- Page Layout here -->
+    <div class="row">
+
+      <!-- Sidebar -->
+      <div class="col l2">
+        <ul class="sidenav sidenav-fixed" style="width:160">
+          
+          <div class="section"></div>
+          <li style="height:100px"><a href="home.html"> <i class="large material-icons cyan-text text-accent-3">home</i> </a></li>
+          <li style="height:100px"><a href="post.html"> <i class="large material-icons cyan-text text-accent-3">add_a_photo</i> </a></li>
+          <li style="height:100px"><a href="analytics.html"> <i class="large material-icons cyan-text text-accent-3">show_chart</i> </a></li>
+          <li style="height:100px"><a href="settings.html"> <i class="large material-icons cyan-text text-accent-3">settings</i> </a></li>
+          <li style="height: 100px"><fb:login-button scope="public_profile,email,read_insights,pages_show_list,instagram_basic" onlogin="checkLoginState();"></fb:login-button></li>
+          <li style="height: 100px;"><button onclick="FBLogout()">logout</button></li>
+          <li style="height: 100px;"><button onclick="fbUser()">Do Stuff</button></li>
+          <li style="height: 100px;"><button onclick="getInstaID()">Insta Id</button></li>
+          <li style="height: 100px;"><button onclick="getInstaThings()">Get Insta Things</button></li>
+          <li style="height: 100px;"><button onclick="getLatestPost()">Get Latest Post</button></li>
+        </ul>
+      </div>
+
+      
+      <div class="col l9">
+
+        <!-- Latest Post Card -->
+        <div class="card">
+          <h5 style="padding: 25px;">Latest Post</h5>
+          <div class="card-image">
+            <img id = "latestPostPic" src="images/sample-1.jpg">
+          </div>
+          <div>
+            <h6 style="padding: 25px;" id="latestPostCaption">This is a caption</h6>
+          </div>
+          <div>
+            <div>
+            <i style="padding: 25px;" class="small material-icons cyan-text text-accent-3">favorite</i> <span id="latestLikeCount">X</span>
+            <i style="padding: 25px;" class="small material-icons cyan-text text-accent-3">chat_bubble</i> <span id="latestCommentCount">X</span>
+          </div>
+          <div class="card-action">
+            <a id="latestPostLink" class="cyan-text text-accent-3" href="#">See on Instagram</a>
+          </div>
+      </div>
+    </div>
+
+    
+    <style>
+      header, main, footer {
+      padding-left: 80px;
+    }
+    </style>
+    
+    <script type="text/javascript" src="materialize.js"></script>
+    <script type="text/javascript" src="script.js"></script>
+
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="/__/firebase/8.2.3/firebase-app.js"></script>
+
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+        https://firebase.google.com/docs/web/setup#available-libraries -->
+    <script src="/__/firebase/8.2.3/firebase-analytics.js"></script>
+
+    <!-- Initialize Firebase -->
+    <script src="/__/firebase/init.js"></script>
+</body>
+</html>

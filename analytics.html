@@ -1,0 +1,262 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--Import materialize.css-->
+    <link type="text/css" rel="stylesheet" href="materialize.css"  media="screen,projection"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+
+    <title>index</title>
+
+</head>
+<body>
+
+  <div id="fb-root"></div>
+  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v9.0&appId=2780557032266285&autoLogAppEvents=1" nonce="lTHf3b7G"></script>
+
+  <script>
+
+    accessToken = "";
+    fbID_1 = "";
+    instaID = "";
+    latestPostURL = ""
+    yesterday1 = Math.floor(Date.now()/1000);
+    yesterday2 = yesterday1-86400;
+    monthAgo2 = yesterday1-2592000;
+
+    window.fbAsyncInit = function() {
+      FB.init({
+        appId      : '2780557032266285',
+        cookie     : true,
+        xfbml      : true,
+        version    : 'v9.0'
+      });
+        
+      FB.AppEvents.logPageView();   
+
+      FB.getLoginStatus(function(response) {
+          statusChangeCallback(response);
+      });
+        
+    };
+
+    (function(d, s, id){
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) {return;}
+      js = d.createElement(s); js.id = id;
+      js.src = "https://connect.facebook.net/en_US/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+
+    function statusChangeCallback(response) {
+      if(response.status === "connected") {
+        console.log("Logged in and authenticated");
+        console.log(response);
+        accessToken = String(response.authResponse.accessToken);
+      } else {
+        console.log("Not authenticated");
+      }
+    }
+
+
+    async function fbUser() { 
+        fetch("https://graph.facebook.com/v9.0/me/accounts?access_token="+accessToken)
+            .then((resp) => resp.json())
+            .then(function(data) 
+            {
+              console.log(data);
+              fbID_1 = String(data.data[0].id);
+            })
+            .catch(function(error)
+            {
+              console.log(error);
+            });
+    
+    }
+
+    async function getInstaID() {
+      fetch ("https://graph.facebook.com/v9.0/"+fbID_1+"?fields=instagram_business_account&access_token="+accessToken)
+        .then((resp) => resp.json())
+        .then(function(data) 
+        {
+          console.log(data);
+          instaID = String(data.instagram_business_account.id);
+        })
+        .catch(function(error)
+        {
+          console.log(error);
+        });
+    }
+
+    async function getInstaThings() {
+      fetch ("https://graph.facebook.com/v9.0/"+instaID+"?fields=profile_picture_url%2Cusername%2Cfollowers_count%2Cfollows_count%2Cmedia_count%2Cmedia&access_token="+accessToken)
+        .then((resp) => resp.json())
+        .then(function(data) 
+        {
+          console.log(data);
+          document.getElementById("username").innerHTML = data.username;
+          document.getElementById("postNumber").innerHTML = data.media_count;
+          document.getElementById("followersNumber").innerHTML = data.followers_count;
+          document.getElementById("followingNumber").innerHTML = data.follows_count;
+          document.getElementById("pfp").src = data.profile_picture_url;
+        })
+        .catch(function(error)
+        {
+          console.log(error);
+        });
+    }
+
+    async function getFollowers() {
+       await fetch ("https://graph.facebook.com/v9.0/"+instaID+"/insights?metric=follower_count&period=day&since="+monthAgo2+"&until="+yesterday2+"&access_token="+accessToken)
+        .then((resp) => resp.json())
+        .then(function(data) 
+        {
+          console.log(data);
+          console.log(yesterday2);
+          console.log(monthAgo2);
+          for(i=0;i<data.data[0].values.length;i++) {
+            newdata.push(data.data[0].values[i].value);
+            newdate.push(data.data[0].values[i].end_time)
+          }
+        })
+        .catch(function(error)
+        {
+          console.log(error);
+        });
+    }
+
+    function FBLogout() {
+      FB.logout(function(response) {
+        console.log("Logged Out")
+      });
+    }
+
+
+  </script>
+
+
+    <!-- Page Layout here -->
+    <div class="row">
+
+      <!-- Sidebar -->
+      <div class="col l2">
+        <ul class="sidenav sidenav-fixed" style="width:160">
+          
+          <div class="section"></div>
+          <li style="height:100px"><a href="home.html"> <i class="large material-icons pink-text text-lighten-1">home</i> </a></li>
+          <li style="height:100px"><a href="post.html"> <i class="large material-icons pink-text text-lighten-1">add_a_photo</i> </a></li>
+          <li style="height:100px"><a href="analytics.html"> <i class="large material-icons pink-text text-lighten-1">show_chart</i> </a></li>
+          <li style="height:100px"><a href="settings.html"> <i class="large material-icons pink-text text-lighten-1">settings</i> </a></li>
+          <li style="height: 100px"><fb:login-button scope="public_profile,email,read_insights,user_birthday,pages_show_list,instagram_basic" onlogin="checkLoginState();"></fb:login-button></li>
+          <li style="height: 100px;"><button onclick="FBLogout()">logout</button></li>
+          <li style="height: 100px;"><button onclick="fbUser()">Do Stuff</button></li>
+          <li style="height: 100px;"><button onclick="getInstaID()">Insta Id</button></li>
+          <li style="height: 100px;"><button onclick="getInstaThings()">Get Insta Things</button></li>
+          <li style="height: 100px;"><button onclick="getFollowers()">Get Followers</button></li>
+        </ul>
+    </div>
+
+      
+    <div class="col l9">
+
+        <div class="card grey lighten-4">
+            <div class="card content">
+              <span class="card-title center-block" id="username"></span>
+              <div class="section"></div>
+              <img src="dummyphoto.jpg" id="pfp" class="circle center-block" style="height=150px; width: 150px;">
+              <table class="centered">
+
+                  <thead>
+                    <tr>
+                        <th>Posts</th>
+                        <th>Followers</th>
+                        <th>Following</th>
+                    </tr>
+                  </thead>
+          
+                  <tbody>
+                    <tr>
+                      <td id = "postNumber" class="pink-text text-lighten-1"></td>
+                      <td id = "followersNumber" class="pink-text text-lighten-1"></td>
+                      <td id = "followingNumber" class="pink-text text-lighten-1"></td>
+                    </tr>
+                  </tbody>
+                </table>
+
+            </div>
+
+        </div>
+
+          <div class="card">
+            <div class="card-content">
+              <p>The chart below shows how many followers you've gained per day over the last 29 days. Don't feel discouraged if the last month's been bad. Next month will surely be prosperous!</p>
+            </div>
+
+            <div class="card-content grey lighten-4">
+
+              <button onclick="updateChart()">update</button>
+
+              <canvas id="myChart"></canvas>
+
+              <script>
+
+                  olddata = [0, 10, 5, 2, 20, 30, 45];
+                  newdata = [];
+                  olddate = ['January', 'February', 'March', 'April', 'May', 'June', 'July']
+                  newdate = [];
+                  var ctx = document.getElementById('myChart').getContext('2d');
+                  var chart = new Chart(ctx, {
+                      // The type of chart we want to create
+                      type: 'line',
+
+                      // The data for our dataset
+                      data: {
+                          labels: newdate,
+                          datasets: [{
+                              label: 'Follower Increase (By Day)',
+                              backgroundColor: '#ec407a',
+                              borderColor: '#ec407a',
+                              data: newdata,
+                          }]
+                      },
+
+                      // Configuration options go here
+                      options: {}
+                  });
+
+                  function updateChart() {
+                      chart.data.datasets[0].data = newdata;
+                      chart.data.labels = newdate;
+                      chart.update();
+                  };
+
+              </script>
+
+            </div>
+          </div>
+    </div>
+
+    
+    <style>
+        header, main, footer {
+            padding-left: 80px;
+        }
+    </style>
+    
+    <script type="text/javascript" src="materialize.js"></script>
+    <script type="text/javascript" src="script.js"></script>
+
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="/__/firebase/8.2.3/firebase-app.js"></script>
+
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+        https://firebase.google.com/docs/web/setup#available-libraries -->
+    <script src="/__/firebase/8.2.3/firebase-analytics.js"></script>
+
+    <!-- Initialize Firebase -->
+    <script src="/__/firebase/init.js"></script>
+</body>
+</html>
